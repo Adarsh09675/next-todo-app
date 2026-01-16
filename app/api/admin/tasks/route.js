@@ -25,7 +25,7 @@ export async function GET(req) {
         }
 
         // Populate user details to know who owns the task
-        const tasks = await Task.find(query).sort({ createdAt: -1 }).populate('user', 'username');
+        const tasks = await Task.find(query).sort({ createdAt: -1 }).populate('user', 'name email');
 
         return NextResponse.json({ tasks }, { status: 200 });
     } catch (error) {
