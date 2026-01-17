@@ -49,7 +49,7 @@ export default function Navbar({ role }) {
     // Navigation Links Config
     const links = [
         { href: '/user/dashboard', label: 'My Tasks', icon: CheckSquare, roles: ['user', 'admin', 'superadmin'] },
-        { href: '/admin/dashboard', label: 'Admin', icon: Users, roles: ['admin', 'superadmin'] },
+        { href: '/admin/dashboard', label: 'Admin', icon: Users, roles: ['admin'] },
         { href: '/superadmin/dashboard', label: 'System', icon: Shield, roles: ['superadmin'] },
     ];
     const filteredLinks = links.filter(link => {
@@ -125,7 +125,15 @@ export default function Navbar({ role }) {
                         <input
                             type="text"
                             value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                setSearchTerm(val);
+                                if (val === '') {
+                                    const params = new URLSearchParams(searchParams.toString());
+                                    params.delete('search');
+                                    router.replace(`?${params.toString()}`);
+                                }
+                            }}
                             onKeyDown={handleKeyDown}
                             placeholder={roleConfig.placeholder}
                             className="bg-transparent text-sm text-gray-300 focus:outline-none w-full placeholder-gray-600"

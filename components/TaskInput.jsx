@@ -22,7 +22,13 @@ export default function TaskInput({ onAdd }) {
         if (!title.trim()) return;
 
         setLoading(true);
+        // Using FormData style or object style? 
+        // The previous implementation passed an object: { title, description, priority }
+        // The parent component should handle converting to FormData if the Action requires it, 
+        // OR we conform this component to call the action directly?
+        // User asked for "same UI", so keeping props `onAdd` is safest, let parent handle logic.
         await onAdd({ title, description, priority });
+
         setTitle('');
         setDescription('');
         setPriority('medium');
@@ -55,7 +61,7 @@ export default function TaskInput({ onAdd }) {
                             initial={{ scale: 0.9, opacity: 0, y: 20 }}
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                            className="glass-dark w-full max-w-lg p-6 rounded-2xl relative z-10"
+                            className="glass-dark w-full max-w-lg p-6 rounded-2xl relative z-10 border border-white/10"
                         >
                             <button
                                 onClick={() => setIsOpen(false)}
@@ -98,8 +104,8 @@ export default function TaskInput({ onAdd }) {
                                                 type="button"
                                                 onClick={() => setPriority(p.value)}
                                                 className={`flex-1 py-1 px-2 rounded-lg text-sm font-medium transition-all ${priority === p.value
-                                                        ? `${p.color} text-white shadow-lg scale-105`
-                                                        : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                                                    ? `${p.color} text-white shadow-lg scale-105`
+                                                    : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                                                     }`}
                                             >
                                                 {p.label}
