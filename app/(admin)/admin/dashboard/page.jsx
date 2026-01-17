@@ -51,8 +51,12 @@ export default function AdminDashboard() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId, isBlocked }),
             });
+            const contentType = res.headers.get('content-type');
             if (res.ok) {
-                setUsers(users.map(u => u._id === userId ? { ...u, isBlocked } : u));
+                setUsers(users.map(u => (u.id || u._id) === userId ? { ...u, isBlocked } : u));
+            } else if (contentType && contentType.includes('application/json')) {
+                const data = await res.json();
+                alert(data.message);
             }
         } catch (error) {
             console.error(error);
@@ -68,7 +72,7 @@ export default function AdminDashboard() {
             });
             const contentType = res.headers.get('content-type');
             if (res.ok) {
-                setUsers(users.map(u => u._id === userId ? { ...u, role: newRole } : u));
+                setUsers(users.map(u => (u.id || u._id) === userId ? { ...u, role: newRole } : u));
             } else if (contentType && contentType.includes('application/json')) {
                 const data = await res.json();
                 alert(data.message);
@@ -85,8 +89,8 @@ export default function AdminDashboard() {
                 method: 'DELETE',
             });
             if (res.ok) {
-                setTasks(tasks.filter(t => t._id !== taskId));
-                if (selectedTask?._id === taskId) setSelectedTask(null);
+                setTasks(tasks.filter(t => (t.id || t._id) !== taskId));
+                if (selectedTask && (selectedTask.id || selectedTask._id) === taskId) setSelectedTask(null);
             }
         } catch (error) {
             console.error(error);
@@ -131,7 +135,7 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {tasks.map((task) => (
                         <TaskCard
-                            key={task._id}
+                            key={task.id || task._id}
                             task={task}
                             isAdmin={true}
                             onDelete={handleDeleteTask}

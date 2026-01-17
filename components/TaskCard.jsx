@@ -13,7 +13,7 @@ export default function TaskCard({ task, onDelete, onUpdate, isAdmin, onClick })
     const handleToggleComplete = (e) => {
         e.stopPropagation();
         if (onUpdate) {
-            onUpdate(task._id, { isCompleted: !task.isCompleted });
+            onUpdate(task.id || task._id, { isCompleted: !task.isCompleted });
         }
     };
 
@@ -57,7 +57,7 @@ export default function TaskCard({ task, onDelete, onUpdate, isAdmin, onClick })
                 <span>{new Date(task.createdAt).toLocaleDateString()}</span>
                 {(isAdmin && onDelete) && (
                     <button
-                        onClick={(e) => { e.stopPropagation(); onDelete(task._id); }}
+                        onClick={(e) => { e.stopPropagation(); onDelete(task.id || task._id); }}
                         className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-colors"
                         title="Delete Task"
                     >

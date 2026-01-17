@@ -11,7 +11,7 @@ export default function SuperAdminDashboard() {
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState('users');
     const [users, setUsers] = useState([]);
-    const [tasks, setTasks] = useState([]);
+    const [tasks, setTasks] = useState([]);      // Global tasks
     const [loading, setLoading] = useState(true);
     const [selectedTask, setSelectedTask] = useState(null);
     const searchParams = useSearchParams();
@@ -24,9 +24,11 @@ export default function SuperAdminDashboard() {
         setLoading(true);
         try {
             const search = searchParams.get('search') || '';
-            const url = activeTab === 'users'
-                ? `/api/admin/users?search=${search}`
-                : `/api/admin/tasks?search=${search}`;
+            let url = '';
+
+            if (activeTab === 'users') url = `/api/admin/users?search=${search}`;
+            else if (activeTab === 'tasks') url = `/api/admin/tasks?search=${search}`;
+
             const res = await fetch(url);
             const contentType = res.headers.get('content-type');
 
@@ -44,6 +46,7 @@ export default function SuperAdminDashboard() {
         }
     };
 
+
     const handleBlockUser = async (userId, isBlocked) => {
         try {
             const res = await fetch('/api/admin/block-user', {
@@ -51,8 +54,12 @@ export default function SuperAdminDashboard() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId, isBlocked }),
             });
+            const contentType = res.headers.get('content-type');
             if (res.ok) {
-                setUsers(users.map(u => u._id === userId ? { ...u, isBlocked } : u));
+                setUsers(users.map(u => (u.id || u._id) === userId ? { ...u, isBlocked } : u));
+            } else if (contentType && contentType.includes('application/json')) {
+                const data = await res.json();
+                alert(data.message);
             }
         } catch (error) {
             console.error(error);
@@ -68,7 +75,7 @@ export default function SuperAdminDashboard() {
             });
             const contentType = res.headers.get('content-type');
             if (res.ok) {
-                setUsers(users.map(u => u._id === userId ? { ...u, role: newRole } : u));
+                setUsers(users.map(u => (u.id || u._id) === userId ? { ...u, role: newRole } : u));
             } else if (contentType && contentType.includes('application/json')) {
                 const data = await res.json();
                 alert(data.message);
@@ -85,8 +92,8 @@ export default function SuperAdminDashboard() {
                 method: 'DELETE',
             });
             if (res.ok) {
-                setTasks(tasks.filter(t => t._id !== taskId));
-                if (selectedTask?._id === taskId) setSelectedTask(null);
+                setTasks(tasks.filter(t => (t.id || t._id) !== taskId));
+                if (selectedTask && (selectedTask.id || selectedTask._id) === taskId) setSelectedTask(null);
             }
         } catch (error) {
             console.error(error);
@@ -136,7 +143,7 @@ export default function SuperAdminDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {tasks.map((task) => (
                         <TaskCard
-                            key={task._id}
+                            key={task.id || task._id}
                             task={task}
                             isAdmin={true}
                             onDelete={handleDeleteTask}
@@ -144,7 +151,7 @@ export default function SuperAdminDashboard() {
                         />
                     ))}
                     {tasks.length === 0 && (
-                        <div className="col-span-full">No tasks found.</div>
+                        <div className="col-span-full">No global tasks found.</div>
                     )}
                 </div>
             )}
