@@ -1,128 +1,213 @@
 'use client';
 
-import { X, Calendar, Flag, CheckCircle, Clock, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { X, Calendar, Flag, CheckCircle, Circle, Save, Trash2, Edit2, Image as ImageIcon } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 export default function TaskDetailModal({ task, onClose, onUpdate, isAdmin }) {
+    const [isEditing, setIsEditing] = useState(false);
+    const [editedTask, setEditedTask] = useState(task);
+
+    useEffect(() => {
+        setEditedTask(task);
+    }, [task]);
+
     if (!task) return null;
 
-    const priorities = {
-        low: { color: 'bg-green-500', label: 'Low' },
-        medium: { color: 'bg-yellow-500', label: 'Medium' },
-        high: { color: 'bg-red-500', label: 'High' }
-    };
-
-    const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleDateString(undefined, {
-            year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-        });
-    };
-
-    const handleMarkComplete = () => {
+    const handleSave = async () => {
         if (onUpdate) {
-            onUpdate(task._id, { isCompleted: !task.isCompleted });
+            await onUpdate(task.id, editedTask);
         }
+        setIsEditing(false);
+    };
+
+    const handleDelete = () => {
+        // Implement delete logic if needed here, or keep it in parent
+    };
+
+    const priorityColor = (p) => {
+        if (p === 'high') return 'bg-red-500';
+        if (p === 'medium') return 'bg-yellow-500';
+        return 'bg-green-500';
     };
 
     return (
         <AnimatePresence>
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-                onClick={onClose}
-            >
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                onClick={onClose}>
                 <motion.div
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.9, opacity: 0 }}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
                     onClick={(e) => e.stopPropagation()}
-                    className="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden"
+                    className="glass-dark w-full max-w-2xl bg-[#111] border border-gray-800 rounded-2xl overflow-hidden shadow-2xl relative max-h-[90vh] overflow-y-auto"
                 >
-                    {/* Header */}
-                    <div className="flex justify-between items-start p-6 border-b border-gray-800 bg-gray-900/50">
-                        <div>
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${priorities[task.priority]?.color} text-black mb-3`}>
-                                {priorities[task.priority]?.label || 'Medium'} Priority
-                            </span>
-                            <h2 className={`text-2xl font-bold ${task.isCompleted ? 'line-through text-gray-500' : 'text-white'}`}>
-                                {task.title}
-                            </h2>
-                        </div>
-                        <button onClick={onClose} className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
-                            <X size={20} />
-                        </button>
-                    </div>
-
-                    {/* Body */}
-                    <div className="p-6 space-y-6">
-                        {/* Description */}
-                        <div>
-                            <h3 className="text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wide">Description</h3>
-                            <p className="text-gray-300 leading-relaxed whitespace-pre-wrap">
-                                {task.description || "No description provided."}
-                            </p>
-                        </div>
-
-                        {/* Metadata Grid */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="bg-gray-800/50 p-3 rounded-xl border border-gray-700/50">
-                                <div className="flex items-center gap-2 text-gray-400 mb-1">
-                                    <Clock size={14} />
-                                    <span className="text-xs">Created At</span>
-                                </div>
-                                <p className="text-sm text-gray-200">{formatDate(task.createdAt)}</p>
+                    <div className="p-6 md:p-8">
+                        <div className="flex justify-between items-start mb-6">
+                            {/* Title Area */}
+                            <div className="flex-1 mr-4">
+                                {isEditing ? (
+                                    <input
+                                        type="text"
+                                        value={editedTask?.title || task.title}
+                                        onChange={(e) => setEditedTask({ ...editedTask, title: e.target.value })}
+                                        className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-xl font-bold text-white focus:outline-none focus:border-blue-500"
+                                    />
+                                ) : (
+                                    <h2 className="text-2xl font-bold text-white leading-tight">{task.title}</h2>
+                                )}
                             </div>
 
-                            <div className="bg-gray-800/50 p-3 rounded-xl border border-gray-700/50">
-                                <div className="flex items-center gap-2 text-gray-400 mb-1">
-                                    <CheckCircle size={14} />
-                                    <span className="text-xs">Status</span>
-                                </div>
-                                <p className={`text-sm font-medium ${task.isCompleted ? 'text-green-400' : 'text-yellow-400'}`}>
-                                    {task.isCompleted ? 'Completed' : 'Pending'}
-                                </p>
+                            <button onClick={onClose} className="p-2 text-gray-400 hover:text-white transition-colors bg-white/5 rounded-full">
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        {/* Metadata Row */}
+                        <div className="flex flex-wrap gap-4 mb-8 text-sm text-gray-400">
+                            <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg">
+                                <div className={`w-2 h-2 rounded-full ${priorityColor(editedTask?.priority || task.priority)}`} />
+                                {isEditing ? (
+                                    <select
+                                        value={editedTask.priority || 'medium'}
+                                        onChange={(e) => setEditedTask({ ...editedTask, priority: e.target.value })}
+                                        className="bg-transparent border-none focus:outline-none text-gray-300"
+                                    >
+                                        <option value="low">Low</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="high">High</option>
+                                    </select>
+                                ) : (
+                                    <span className="capitalize">{task.priority || 'Medium'}</span>
+                                )}
                             </div>
 
-                            {/* Show Creator for Admins */}
-                            {isAdmin && task.user && (
-                                <div className="bg-gray-800/50 p-3 rounded-xl border border-gray-700/50 col-span-2">
-                                    <div className="flex items-center gap-2 text-gray-400 mb-1">
-                                        <User size={14} />
-                                        <span className="text-xs">Created By</span>
+                            <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg">
+                                {isEditing ? (
+                                    <select
+                                        value={editedTask.status || 'pending'}
+                                        onChange={(e) => {
+                                            const newStatus = e.target.value;
+                                            setEditedTask({
+                                                ...editedTask,
+                                                status: newStatus,
+                                                is_completed: newStatus === 'completed'
+                                            });
+                                        }}
+                                        className="bg-transparent border-none focus:outline-none text-gray-300"
+                                    >
+                                        <option value="pending">Pending</option>
+                                        <option value="in-progress">In Progress</option>
+                                        <option value="completed">Completed</option>
+                                    </select>
+                                ) : (
+                                    <button
+                                        onClick={() => {
+                                            if (isAdmin) return;
+                                            const newStatus = task.is_completed ? 'pending' : 'completed';
+                                            // Trigger parent update
+                                            onUpdate(task.id, {
+                                                status: newStatus,
+                                                is_completed: !task.is_completed
+                                            });
+                                        }}
+                                        className={`flex items-center gap-2 ${isAdmin ? 'cursor-default' : 'cursor-pointer hover:text-white transition-colors'}`}
+                                        disabled={isAdmin}
+                                    >
+                                        {task.is_completed ? <CheckCircle size={14} className="text-green-500" /> : <Circle size={14} />}
+                                        <span>{task.is_completed ? 'Completed' : 'Pending'}</span>
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="flex items-center gap-2 px-2">
+                                <Calendar size={14} />
+                                <span>{new Date(task.created_at).toLocaleDateString('en-GB')}</span>
+                            </div>
+                        </div>
+
+                        {/* Image Section */}
+                        {(task.image_url || isEditing) && (
+                            <div className="mb-8">
+                                {task.image_url && !isEditing && (
+                                    <div className="rounded-xl overflow-hidden mb-4 border border-gray-800 bg-black/20">
+                                        <img
+                                            src={task.image_url}
+                                            alt="Task Attachment"
+                                            className="w-full h-auto max-h-96 object-contain"
+                                        />
                                     </div>
-                                    <p className="text-sm text-gray-200">
-                                        {task.user.username || task.user.name || 'Unknown User'}
-                                        {task.user.email && <span className="text-gray-500 ml-2 text-xs">({task.user.email})</span>}
-                                    </p>
-                                </div>
+                                )}
+
+                                {isEditing && (
+                                    <div className="space-y-2 p-4 bg-white/5 rounded-xl border border-white/5">
+                                        <label className="text-gray-400 text-sm flex items-center gap-2 font-medium">
+                                            <ImageIcon size={16} /> Update Attachment
+                                        </label>
+                                        {task.image_url && (
+                                            <div className="text-xs text-gray-500 mb-2">Current: <a href={task.image_url} target="_blank" className="text-blue-400 hover:underline">View Image</a></div>
+                                        )}
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => setEditedTask({ ...editedTask, image: e.target.files[0] })}
+                                            className="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-gray-800 file:text-blue-400 hover:file:bg-gray-700 cursor-pointer"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Description */}
+                        <div className="mb-8">
+                            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Description</h3>
+                            {isEditing ? (
+                                <textarea
+                                    value={editedTask?.description || ''}
+                                    onChange={(e) => setEditedTask({ ...editedTask, description: e.target.value })}
+                                    rows={5}
+                                    className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-gray-300 focus:outline-none focus:border-blue-500 resize-none"
+                                />
+                            ) : (
+                                <p className="text-gray-300 leading-relaxed whitespace-pre-wrap">
+                                    {task.description || 'No description provided for this task.'}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex justify-end pt-6 border-t border-gray-800 gap-3">
+                            {!isAdmin ? (
+                                isEditing ? (
+                                    <>
+                                        <button
+                                            onClick={() => { setIsEditing(false); setEditedTask(task); }}
+                                            className="px-4 py-2 text-gray-400 hover:text-white"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={handleSave}
+                                            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg flex items-center gap-2 font-medium"
+                                        >
+                                            <Save size={18} /> Save Changes
+                                        </button>
+                                    </>
+                                ) : (
+                                    <button
+                                        onClick={() => setIsEditing(true)}
+                                        className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg flex items-center gap-2 font-medium transition-colors"
+                                    >
+                                        <Edit2 size={18} /> Edit Task
+                                    </button>
+                                )
+                            ) : (
+                                <span className="text-xs text-gray-500 italic flex items-center">Admin View Only</span>
                             )}
                         </div>
                     </div>
-
-                    {/* Footer Actions */}
-                    <div className="p-6 border-t border-gray-800 bg-gray-900/50 flex justify-end gap-3">
-                        {!isAdmin && (
-                            <button
-                                onClick={handleMarkComplete}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${task.isCompleted
-                                    ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                                    : 'bg-green-600 text-white hover:bg-green-500'
-                                    }`}
-                            >
-                                <CheckCircle size={18} />
-                                {task.isCompleted ? 'Mark as Pending' : 'Mark as Completed'}
-                            </button>
-                        )}
-                        {isAdmin && (
-                            <div className="text-xs text-gray-500 flex items-center">
-                                *Admin View Mode
-                            </div>
-                        )}
-                    </div>
                 </motion.div>
-            </motion.div>
+            </div>
         </AnimatePresence>
     );
 }

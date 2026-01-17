@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, X, Flag } from 'lucide-react';
+import { Plus, X, Flag, Image as ImageIcon } from 'lucide-react';
 
 export default function TaskInput({ onAdd }) {
     const [isOpen, setIsOpen] = useState(false);
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [priority, setPriority] = useState('medium');
+    const [image, setImage] = useState(null);
     const [loading, setLoading] = useState(false);
 
     const priorities = [
@@ -22,10 +23,12 @@ export default function TaskInput({ onAdd }) {
         if (!title.trim()) return;
 
         setLoading(true);
-        await onAdd({ title, description, priority });
+        await onAdd({ title, description, priority, image });
+
         setTitle('');
         setDescription('');
         setPriority('medium');
+        setImage(null);
         setLoading(false);
         setIsOpen(false);
     };
@@ -55,7 +58,7 @@ export default function TaskInput({ onAdd }) {
                             initial={{ scale: 0.9, opacity: 0, y: 20 }}
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                            className="glass-dark w-full max-w-lg p-6 rounded-2xl relative z-10"
+                            className="glass-dark w-full max-w-lg p-6 rounded-2xl relative z-10 border border-white/10"
                         >
                             <button
                                 onClick={() => setIsOpen(false)}
@@ -86,25 +89,39 @@ export default function TaskInput({ onAdd }) {
                                     />
                                 </div>
 
-                                {/* Priority Selection */}
-                                <div>
-                                    <label className="text-gray-400 text-sm mb-2 block flex items-center gap-2">
-                                        <Flag size={14} /> Priority
-                                    </label>
-                                    <div className="flex gap-3">
-                                        {priorities.map((p) => (
-                                            <button
-                                                key={p.value}
-                                                type="button"
-                                                onClick={() => setPriority(p.value)}
-                                                className={`flex-1 py-1 px-2 rounded-lg text-sm font-medium transition-all ${priority === p.value
-                                                        ? `${p.color} text-white shadow-lg scale-105`
+                                {/* Image and Priority */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-gray-400 text-sm mb-2 block flex items-center gap-2">
+                                            <Flag size={14} /> Priority
+                                        </label>
+                                        <div className="flex gap-2">
+                                            {priorities.map((p) => (
+                                                <button
+                                                    key={p.value}
+                                                    type="button"
+                                                    onClick={() => setPriority(p.value)}
+                                                    className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-medium transition-all ${priority === p.value
+                                                        ? `${p.color} text-white shadow-lg`
                                                         : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                                                    }`}
-                                            >
-                                                {p.label}
-                                            </button>
-                                        ))}
+                                                        }`}
+                                                >
+                                                    {p.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-gray-400 text-sm mb-2 block flex items-center gap-2">
+                                            <ImageIcon size={14} /> Attachment
+                                        </label>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => setImage(e.target.files[0])}
+                                            className="w-full text-sm text-gray-400 file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-gray-800 file:text-blue-400 hover:file:bg-gray-700 transition-all"
+                                        />
                                     </div>
                                 </div>
 

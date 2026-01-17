@@ -1,12 +1,40 @@
 import { NextResponse } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
 export async function POST() {
-    const cookieStore = await cookies();
-    cookieStore.delete('token');
+    try {
+        const cookieStore = await cookies();
 
-    return NextResponse.json(
-        { message: 'Logged out successfully' },
-        { status: 200 }
-    );
+        const supabase = createServerClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+            {
+                cookies: {
+                    getAll() {
+                        return cookieStore.getAll();
+                    },
+                    setAll(cookiesToSet) {
+                        try {
+                            cookiesToSet.forEach(({ name, value, options }) =>
+                                cookieStore.set(name, value, options)
+                            );
+                        } catch { }
+                    },
+                },
+            }
+        );
+
+        await supabase.auth.signOut();
+
+        return NextResponse.json(
+            { message: 'Logged out successfully' },
+            { status: 200 }
+        );
+    } catch (error) {
+        return NextResponse.json(
+            { message: 'Internal server error' },
+            { status: 500 }
+        );
+    }
 }
