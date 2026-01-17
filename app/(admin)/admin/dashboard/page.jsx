@@ -1,158 +1,59 @@
-'use client';
-
-import { useState, useEffect } from 'react';
+import { getUsers, toggleUserBlock, updateUserRole, getAllTasks } from '@/actions/admin-actions';
+import { deleteTask } from '@/actions/task-actions';
 import UserTable from '@/components/UserTable';
-import TaskCard from '@/components/TaskCard';
-import TaskDetailModal from '@/components/TaskDetailModal';
-import { useAuth } from '@/components/AuthProvider';
-import { useSearchParams } from 'next/navigation';
+import TaskListClient from '@/components/TaskListClient';
+import Link from 'next/link';
 
-export default function AdminDashboard() {
-    const { user } = useAuth();
-    const [activeTab, setActiveTab] = useState('users');
-    const [users, setUsers] = useState([]);
-    const [tasks, setTasks] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [selectedTask, setSelectedTask] = useState(null);
-    const searchParams = useSearchParams();
+export default async function AdminDashboard({ searchParams }) {
+    const sp = await searchParams;
+    const tab = sp?.tab || 'users';
+    const search = sp?.search || '';
 
-    useEffect(() => {
-        fetchData();
-    }, [activeTab, searchParams]);
+    let users = [];
+    let tasks = [];
 
-    const fetchData = async () => {
-        setLoading(true);
-        try {
-            const search = searchParams.get('search') || '';
-            const url = activeTab === 'users'
-                ? `/api/admin/users?search=${search}`
-                : `/api/admin/tasks?search=${search}`;
-            const res = await fetch(url);
-            const contentType = res.headers.get('content-type');
-
-            if (res.ok && contentType && contentType.includes('application/json')) {
-                const data = await res.json();
-                if (activeTab === 'users') setUsers(data.users);
-                else setTasks(data.tasks);
-            } else {
-                console.error('Failed to fetch data');
-            }
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleBlockUser = async (userId, isBlocked) => {
-        try {
-            const res = await fetch('/api/admin/block-user', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId, isBlocked }),
-            });
-            const contentType = res.headers.get('content-type');
-            if (res.ok) {
-                setUsers(users.map(u => (u.id || u._id) === userId ? { ...u, isBlocked } : u));
-            } else if (contentType && contentType.includes('application/json')) {
-                const data = await res.json();
-                alert(data.message);
-            }
-        } catch (error) {
-            console.error(error);
-        }
-    };
-
-    const handleRoleUpdate = async (userId, newRole) => {
-        try {
-            const res = await fetch('/api/admin/update-role', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId, newRole }),
-            });
-            const contentType = res.headers.get('content-type');
-            if (res.ok) {
-                setUsers(users.map(u => (u.id || u._id) === userId ? { ...u, role: newRole } : u));
-            } else if (contentType && contentType.includes('application/json')) {
-                const data = await res.json();
-                alert(data.message);
-            }
-        } catch (error) {
-            console.error(error);
-        }
-    };
-
-    const handleDeleteTask = async (taskId) => {
-        if (!confirm("Are you sure?")) return;
-        try {
-            const res = await fetch(`/api/admin/tasks?id=${taskId}`, {
-                method: 'DELETE',
-            });
-            if (res.ok) {
-                setTasks(tasks.filter(t => (t.id || t._id) !== taskId));
-                if (selectedTask && (selectedTask.id || selectedTask._id) === taskId) setSelectedTask(null);
-            }
-        } catch (error) {
-            console.error(error);
-        }
-    };
-
-    if (!user) return null;
+    if (tab === 'users') {
+        const { users: fetchedUsers } = await getUsers(search);
+        users = fetchedUsers || [];
+    } else {
+        // Use getAllTasks from admin-actions to fetch all tasks with user info
+        const { tasks: fetchedTasks } = await getAllTasks(search);
+        tasks = fetchedTasks || [];
+    }
 
     return (
-        <div>
-            <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
+        <div className="container mx-auto px-4 py-8">
+            <h1 className="text-3xl font-bold mb-6 text-white">Admin Dashboard</h1>
 
+            {/* Tabs */}
             <div className="flex gap-4 mb-8">
-                <button
-                    onClick={() => setActiveTab('users')}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors
-            ${activeTab === 'users' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}
-          `}
+                <Link
+                    href="?tab=users"
+                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${tab === 'users' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                        }`}
                 >
                     User Management
-                </button>
-                <button
-                    onClick={() => setActiveTab('tasks')}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors
-            ${activeTab === 'tasks' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}
-          `}
+                </Link>
+                <Link
+                    href="?tab=tasks"
+                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${tab === 'tasks' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                        }`}
                 >
                     All Tasks
-                </button>
+                </Link>
             </div>
 
-            {loading ? (
-                <div>Loading...</div>
-            ) : activeTab === 'users' ? (
+            {/* Content */}
+            {tab === 'users' ? (
                 <UserTable
                     users={users}
-                    onBlock={handleBlockUser}
-                    onRoleUpdate={handleRoleUpdate}
-                    currentUserRole={user.role}
+                    onBlock={toggleUserBlock}
+                    onRoleUpdate={updateUserRole}
+                    currentUserRole="admin" // Using 'admin' as default since this is Admin Dashboard. Ideally check real user role.
                 />
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {tasks.map((task) => (
-                        <TaskCard
-                            key={task.id || task._id}
-                            task={task}
-                            isAdmin={true}
-                            onDelete={handleDeleteTask}
-                            onClick={setSelectedTask}
-                        />
-                    ))}
-                    {tasks.length === 0 && (
-                        <div className="col-span-full">No tasks found.</div>
-                    )}
-                </div>
+                <TaskListClient initialTasks={tasks} allowAdd={false} />
             )}
-
-            <TaskDetailModal
-                task={selectedTask}
-                onClose={() => setSelectedTask(null)}
-                isAdmin={true}
-            />
         </div>
     );
 }

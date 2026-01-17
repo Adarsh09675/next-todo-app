@@ -64,7 +64,7 @@ export default function UserTable({ users, onBlock, onRoleUpdate, currentUserRol
                                 </span>
                             </td>
                             <td className="px-6 py-4">
-                                {user.isBlocked ? (
+                                {user.is_blocked ? (
                                     <span className="flex items-center gap-1 text-red-400"><Ban size={14} /> Blocked</span>
                                 ) : (
                                     <span className="flex items-center gap-1 text-green-400"><CheckCircle size={14} /> Active</span>
@@ -74,13 +74,13 @@ export default function UserTable({ users, onBlock, onRoleUpdate, currentUserRol
                                 {/* Block/Unblock */}
                                 {canBlock(user) && (
                                     <button
-                                        onClick={() => handleBlock(user.id || user._id, user.isBlocked, user.role)}
+                                        onClick={() => handleBlock(user.id || user._id, user.is_blocked, user.role)}
                                         disabled={loadingId === (user.id || user._id)}
                                         className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors
-                        ${user.isBlocked ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20' : 'bg-red-500/10 text-red-400 hover:bg-red-500/20'}
+                        ${user.is_blocked ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20' : 'bg-red-500/10 text-red-400 hover:bg-red-500/20'}
                     `}
                                     >
-                                        {user.isBlocked ? 'Unblock' : 'Block'}
+                                        {user.is_blocked ? 'Unblock' : 'Block'}
                                     </button>
                                 )}
 

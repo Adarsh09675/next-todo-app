@@ -20,7 +20,7 @@ export default function MobileSidebar({ isOpen, onClose }) {
 
     const links = [
         { href: '/user/dashboard', label: 'My Tasks', icon: CheckSquare, roles: ['user', 'admin', 'superadmin'] },
-        { href: '/admin/dashboard', label: 'Admin Panel', icon: Users, roles: ['admin', 'superadmin'] },
+        { href: '/admin/dashboard', label: 'Admin Panel', icon: Users, roles: ['admin'] },
         { href: '/superadmin/dashboard', label: 'System Control', icon: Shield, roles: ['superadmin'] },
     ];
 
