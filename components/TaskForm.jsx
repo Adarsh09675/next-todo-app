@@ -77,6 +77,16 @@ export default function TaskForm({ task, onClose, onSuccess }) {
                         />
                     </div>
 
+                    <div className="space-y-1">
+                        <label className="text-sm font-medium text-gray-300">Attachment</label>
+                        <input
+                            type="file"
+                            name="image"
+                            accept="image/*"
+                            className="w-full bg-black/20 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-blue-500 transition-all text-sm file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-gray-800 file:text-blue-400 hover:file:bg-gray-700"
+                        />
+                    </div>
+
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1">
                             <label className="text-sm font-medium text-gray-300">Priority</label>

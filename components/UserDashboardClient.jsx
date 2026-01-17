@@ -9,6 +9,7 @@ import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 
 export default function UserDashboardClient({ initialTasks }) {
+    const router = useRouter();
     const [tasks, setTasks] = useState(initialTasks);
     const [selectedTask, setSelectedTask] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -25,25 +26,17 @@ export default function UserDashboardClient({ initialTasks }) {
     }, [initialTasks]);
 
     const handleAddTask = async (taskData) => {
-        // Adapt Data: TaskInput passes { title, description, priority }
-        // Server Action expects FormData.
         const formData = new FormData();
         formData.append('title', taskData.title);
         formData.append('description', taskData.description);
         formData.append('priority', taskData.priority);
-        formData.append('status', 'pending'); // Default
+        formData.append('status', 'pending');
+        if (taskData.image) {
+            formData.append('image', taskData.image);
+        }
 
-        // Optimistic update?
-        // Let's wait for server response for ID.
         const res = await createTask(formData);
-        if (res.success) {
-            // We can't easily add to local state because we don't have the new ID or created_at from server immediately 
-            // unless we return the created object from action.
-            // My action currently returns { success, message }. 
-            // I should update the action to return the object OR rely on router.refresh() 
-            // forcing a new `initialTasks` prop.
-            // For "same UI" feel, router.refresh is best practice with Server Actions.
-        } else {
+        if (!res.success) {
             alert(res.message);
         }
     };
@@ -69,6 +62,9 @@ export default function UserDashboardClient({ initialTasks }) {
         formData.append('description', description);
         formData.append('priority', priority);
         formData.append('status', status);
+        if (updates.image) {
+            formData.append('image', updates.image);
+        }
 
         const res = await updateTask(taskId, formData);
 
@@ -78,7 +74,12 @@ export default function UserDashboardClient({ initialTasks }) {
                 ...updates,
                 title, description, priority, status,
                 is_completed: status === 'completed',
+                // If backend returned new URL, use it. Else keep existing.
+                image_url: res.image_url || currentTask.image_url
             };
+
+            // Remove 'image' File object if present in updates, to clean up state
+            if (updatedTaskData.image) delete updatedTaskData.image;
 
             const updatedTasks = tasks.map(t => t.id === taskId ? updatedTaskData : t);
             setTasks(updatedTasks);
@@ -86,6 +87,8 @@ export default function UserDashboardClient({ initialTasks }) {
             if (selectedTask && selectedTask.id === taskId) {
                 setSelectedTask(updatedTaskData);
             }
+
+            router.refresh(); // Sync server state
         }
     };
 

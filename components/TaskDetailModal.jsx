@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, Flag, CheckCircle, Circle, Save, Trash2, Edit2 } from 'lucide-react';
+import { X, Calendar, Flag, CheckCircle, Circle, Save, Trash2, Edit2, Image as ImageIcon } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 export default function TaskDetailModal({ task, onClose, onUpdate, isAdmin }) {
@@ -40,10 +40,8 @@ export default function TaskDetailModal({ task, onClose, onUpdate, isAdmin }) {
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.9 }}
                     onClick={(e) => e.stopPropagation()}
-                    className="glass-dark w-full max-w-2xl bg-[#111] border border-gray-800 rounded-2xl overflow-hidden shadow-2xl relative"
+                    className="glass-dark w-full max-w-2xl bg-[#111] border border-gray-800 rounded-2xl overflow-hidden shadow-2xl relative max-h-[90vh] overflow-y-auto"
                 >
-                    {/* Header Image/Gradient could go here if we had one, keeping simple for now */}
-
                     <div className="p-6 md:p-8">
                         <div className="flex justify-between items-start mb-6">
                             {/* Title Area */}
@@ -127,6 +125,38 @@ export default function TaskDetailModal({ task, onClose, onUpdate, isAdmin }) {
                                 <span>{new Date(task.created_at).toLocaleDateString('en-GB')}</span>
                             </div>
                         </div>
+
+                        {/* Image Section */}
+                        {(task.image_url || isEditing) && (
+                            <div className="mb-8">
+                                {task.image_url && !isEditing && (
+                                    <div className="rounded-xl overflow-hidden mb-4 border border-gray-800 bg-black/20">
+                                        <img
+                                            src={task.image_url}
+                                            alt="Task Attachment"
+                                            className="w-full h-auto max-h-96 object-contain"
+                                        />
+                                    </div>
+                                )}
+
+                                {isEditing && (
+                                    <div className="space-y-2 p-4 bg-white/5 rounded-xl border border-white/5">
+                                        <label className="text-gray-400 text-sm flex items-center gap-2 font-medium">
+                                            <ImageIcon size={16} /> Update Attachment
+                                        </label>
+                                        {task.image_url && (
+                                            <div className="text-xs text-gray-500 mb-2">Current: <a href={task.image_url} target="_blank" className="text-blue-400 hover:underline">View Image</a></div>
+                                        )}
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => setEditedTask({ ...editedTask, image: e.target.files[0] })}
+                                            className="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-gray-800 file:text-blue-400 hover:file:bg-gray-700 cursor-pointer"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         {/* Description */}
                         <div className="mb-8">

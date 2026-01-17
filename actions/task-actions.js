@@ -40,11 +40,34 @@ export async function createTask(formData) {
     const description = formData.get('description')
     const priority = formData.get('priority')
     const status = formData.get('status')
+    const imageFile = formData.get('image')
 
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
         return { success: false, message: 'Unauthorized' }
+    }
+
+    let image_url = null;
+    if (imageFile && imageFile.size > 0) {
+        const fileExt = imageFile.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const filePath = `${user.id}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from('task-images')
+            .upload(filePath, imageFile);
+
+        if (uploadError) {
+            console.error('Upload error:', uploadError);
+            return { success: false, message: 'Failed to upload image' };
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+            .from('task-images')
+            .getPublicUrl(filePath);
+
+        image_url = publicUrl;
     }
 
     const { error } = await supabase
@@ -54,7 +77,8 @@ export async function createTask(formData) {
             description,
             priority,
             status,
-            user_id: user.id
+            user_id: user.id,
+            image_url
         })
 
     if (error) {
@@ -62,7 +86,9 @@ export async function createTask(formData) {
         return { success: false, message: 'Failed to create task' }
     }
 
-    revalidatePath('/admin/tasks')
+    revalidatePath('/admin/dashboard')
+    revalidatePath('/user/dashboard')
+    revalidatePath('/superadmin/dashboard')
     return { success: true, message: 'Task created successfully' }
 }
 
@@ -74,11 +100,32 @@ export async function updateTask(id, formData) {
     const description = formData.get('description');
     const priority = formData.get('priority');
     const status = formData.get('status');
+    const imageFile = formData.get('image');
 
     if (title !== null) updates.title = title;
     if (description !== null) updates.description = description;
     if (priority !== null) updates.priority = priority;
     if (status !== null) updates.status = status;
+
+    if (imageFile && imageFile.size > 0) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            const fileExt = imageFile.name.split('.').pop();
+            const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+            const filePath = `${user.id}/${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('task-images')
+                .upload(filePath, imageFile);
+
+            if (!uploadError) {
+                const { data: { publicUrl } } = supabase.storage
+                    .from('task-images')
+                    .getPublicUrl(filePath);
+                updates.image_url = publicUrl;
+            }
+        }
+    }
 
     // Legacy mapping support: if status is updated, sync is_completed (if needed by frontend legacy logic, though we generally use status now)
     if (status === 'completed') updates.is_completed = true;
@@ -94,10 +141,11 @@ export async function updateTask(id, formData) {
         return { success: false, message: 'Failed to update task' }
     }
 
-    revalidatePath('/admin/tasks')
+    revalidatePath('/admin/dashboard')
     revalidatePath('/user/dashboard')
     revalidatePath('/superadmin/dashboard')
-    return { success: true, message: 'Task updated successfully' }
+    // Return image_url so frontend can update state immediately if needed, though refresh covers it
+    return { success: true, message: 'Task updated successfully', image_url: updates.image_url }
 }
 
 export async function deleteTask(id) {
