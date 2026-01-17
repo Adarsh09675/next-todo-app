@@ -6,7 +6,13 @@ import { useState } from 'react';
 export default function UserTable({ users, onBlock, onRoleUpdate, currentUserRole }) {
     const [loadingId, setLoadingId] = useState(null);
 
-    const handleBlock = async (userId, currentStatus) => {
+    const handleBlock = async (userId, currentStatus, targetUserRole) => {
+        // Restriction: Admin cannot block another Admin
+        if (currentUserRole === 'admin' && targetUserRole === 'admin') {
+            alert("Admin can't be blocked by admin. You can block only users.");
+            return;
+        }
+
         setLoadingId(userId);
         await onBlock(userId, !currentStatus);
         setLoadingId(null);
@@ -42,7 +48,7 @@ export default function UserTable({ users, onBlock, onRoleUpdate, currentUserRol
                 </thead>
                 <tbody className="divide-y divide-gray-800">
                     {users.map((user) => (
-                        <tr key={user._id} className="hover:bg-white/5 transition-colors">
+                        <tr key={user.id || user._id} className="hover:bg-white/5 transition-colors">
                             <td className="px-6 py-4">
                                 <div className="flex flex-col">
                                     <span className="font-medium text-white">{user.name}</span>
@@ -68,8 +74,8 @@ export default function UserTable({ users, onBlock, onRoleUpdate, currentUserRol
                                 {/* Block/Unblock */}
                                 {canBlock(user) && (
                                     <button
-                                        onClick={() => handleBlock(user._id, user.isBlocked)}
-                                        disabled={loadingId === user._id}
+                                        onClick={() => handleBlock(user.id || user._id, user.isBlocked, user.role)}
+                                        disabled={loadingId === (user.id || user._id)}
                                         className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors
                         ${user.isBlocked ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20' : 'bg-red-500/10 text-red-400 hover:bg-red-500/20'}
                     `}
@@ -83,8 +89,8 @@ export default function UserTable({ users, onBlock, onRoleUpdate, currentUserRol
                                     <div className="flex gap-1">
                                         {user.role === 'user' && (
                                             <button
-                                                onClick={() => handleRoleChange(user._id, 'admin')}
-                                                disabled={loadingId === user._id}
+                                                onClick={() => handleRoleChange(user.id || user._id, 'admin')}
+                                                disabled={loadingId === (user.id || user._id)}
                                                 className="px-3 py-1.5 rounded-md text-xs font-medium bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors"
                                             >
                                                 Promote to Admin
@@ -92,8 +98,8 @@ export default function UserTable({ users, onBlock, onRoleUpdate, currentUserRol
                                         )}
                                         {user.role === 'admin' && currentUserRole === 'superadmin' && (
                                             <button
-                                                onClick={() => handleRoleChange(user._id, 'user')}
-                                                disabled={loadingId === user._id}
+                                                onClick={() => handleRoleChange(user.id || user._id, 'user')}
+                                                disabled={loadingId === (user.id || user._id)}
                                                 className="px-3 py-1.5 rounded-md text-xs font-medium bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-colors"
                                             >
                                                 Demote to User

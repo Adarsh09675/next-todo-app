@@ -20,7 +20,7 @@ export default function TaskDetailModal({ task, onClose, onUpdate, isAdmin }) {
 
     const handleMarkComplete = () => {
         if (onUpdate) {
-            onUpdate(task._id, { isCompleted: !task.isCompleted });
+            onUpdate(task.id || task._id, { isCompleted: !task.isCompleted });
         }
     };
 
